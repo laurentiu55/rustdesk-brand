@@ -75,3 +75,4 @@ function initializePortForward()
     $(#video-wrapper).style.set { visibility: "hidden", position: "absolute" };
     $(#file-transfer-wrapper).style.set { display: "block" };
 }
+

@@ -39,3 +39,4 @@ class PrinterComponent extends Reactor.Component {
         </div>;
     }
 }
+
