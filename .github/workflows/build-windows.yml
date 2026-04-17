@@ -9,43 +9,69 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable-x86_64-pc-windows-msvc
 
+      - name: Setup MSVC env
+        uses: ilammy/msvc-dev-cmd@v1
+
       - name: Setup LLVM 15
         shell: powershell
         run: |
-          choco install llvm --version=15.0.7 -y
+          choco install llvm --version=15.0.7 -y --allow-downgrade --no-progress
+          & 'C:\Program Files\LLVM\bin\clang.exe' --version
           "LIBCLANG_PATH=C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Setup vcpkg
         shell: powershell
         run: |
+          if (Test-Path C:\vcpkg) { Remove-Item C:\vcpkg -Recurse -Force }
           git clone https://github.com/microsoft/vcpkg C:\vcpkg
           cd C:\vcpkg
           .\bootstrap-vcpkg.bat
           .\vcpkg.exe install libvpx:x64-windows-static libyuv:x64-windows-static opus:x64-windows-static aom:x64-windows-static
           "VCPKG_ROOT=C:\vcpkg" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
-      - name: Setup MSVC env
-        uses: ilammy/msvc-dev-cmd@v1
+      - name: Diagnostics
+        shell: powershell
+        run: |
+          Write-Host "LIBCLANG_PATH=$env:LIBCLANG_PATH"
+          Write-Host "VCPKG_ROOT=$env:VCPKG_ROOT"
+          Write-Host "INCLUDE=$env:INCLUDE"
+          Test-Path 'C:\Program Files\LLVM\bin\libclang.dll'
+          Test-Path 'C:\vcpkg\installed\x64-windows-static\include\vpx\vpx_encoder.h'
+          Test-Path 'C:\vcpkg\installed\x64-windows-static\include\aom\aom_encoder.h'
 
-      - name: Build
+      - name: Prepare build env
         shell: powershell
         run: |
           $incArgs = @()
           $incArgs += ($env:INCLUDE -split ';' | Where-Object { $_ } | ForEach-Object { '-I"'+$_+'"' })
           $incArgs += '-IC:\vcpkg\installed\x64-windows-static\include'
           "BINDGEN_EXTRA_CLANG_ARGS=$($incArgs -join ' ')" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          Invoke-WebRequest 'https://raw.githubusercontent.com/c-smile/sciter-sdk/master/bin.win/x64/sciter.dll' -OutFile .\sciter.dll
+
+      - name: Build
+        shell: powershell
+        run: |
+          cargo clean
           cargo build --release --target x86_64-pc-windows-msvc
+
+      - name: Collect artifacts
+        shell: powershell
+        run: |
+          New-Item -ItemType Directory -Force .\artifacts | Out-Null
+          Copy-Item .\target\release\*.exe .\artifacts -ErrorAction SilentlyContinue
+          Copy-Item .\target\release\*.msi .\artifacts -ErrorAction SilentlyContinue
+          Copy-Item .\sciter.dll .\artifacts -ErrorAction SilentlyContinue
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: rustdesk-brand-win
-          path: |
-            target/release/*.exe
-            target/release/*.msi
+          path: .\artifacts\*
