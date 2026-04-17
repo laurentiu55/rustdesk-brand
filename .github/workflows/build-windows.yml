@@ -46,6 +46,16 @@ jobs:
           "BINDGEN_EXTRA_CLANG_ARGS=$($incArgs -join ' ')" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           Invoke-WebRequest 'https://raw.githubusercontent.com/c-smile/sciter-sdk/master/bin.win/x64/sciter.dll' -OutFile .\target\x86_64-pc-windows-msvc\release\sciter.dll
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Inline Sciter
+        shell: powershell
+        run: |
+          python .\res\inline-sciter.py
+
       - name: Build
         shell: powershell
         run: |
@@ -60,3 +70,4 @@ jobs:
           path: |
             target/x86_64-pc-windows-msvc/release/**
           if-no-files-found: warn
+
