@@ -42,3 +42,43 @@
 </body>
 
 </html>
+
+<style>
+html, body {
+  background: #0A0F14 !important;
+  color: #E6F7FB !important;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: url("common/sln_logo_bg.png") center center / 42% no-repeat;
+  opacity: 0.08;
+  pointer-events: none;
+  z-index: 0;
+}
+body > * {
+  position: relative;
+  z-index: 1;
+}
+button, .button, input[type="button"], input[type="submit"] {
+  background: linear-gradient(180deg, #00D7FF, #0891B2) !important;
+  color: #071017 !important;
+  border: 1px solid #D4AF37 !important;
+}
+input, textarea, select {
+  background: #101820 !important;
+  color: #E6F7FB !important;
+  border: 1px solid #1E2B36 !important;
+}
+.sidebar, .panel, .card, .box, .container {
+  background: rgba(10,15,20,0.88) !important;
+  border-color: #1E2B36 !important;
+}
+a, .link, .active, .primary {
+  color: #00D7FF !important;
+}
+.title, .brand, .logo-text, h1, h2, h3 {
+  color: #D4AF37 !important;
+}
+</style>
